@@ -1,7 +1,7 @@
 /*
  *
  * k6 - a next-generation load testing tool
- * Copyright (C) 2016 Load Impact
+ * Copyright (C) 2021 Load Impact
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -22,30 +22,14 @@ package template
 
 import (
 	"encoding/json"
-	"os"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/guregu/null.v3"
 
 	"go.k6.io/k6/lib/types"
 )
-
-func TestConfigParseArg(t *testing.T) {
-	c, err := ParseArg("example.com")
-	assert.Nil(t, err)
-	assert.Equal(t, null.StringFrom("example.com"), c.Address)
-	assert.False(t, c.PushInterval.Valid)
-	assert.EqualValues(t, 0, c.PushInterval.Duration)
-
-	c, err = ParseArg("address=example.com,push_interval=2s")
-	assert.Nil(t, err)
-	assert.Equal(t, null.StringFrom("example.com"), c.Address)
-	assert.True(t, c.PushInterval.Valid)
-	assert.EqualValues(t, time.Second*2, c.PushInterval.Duration)
-}
 
 func TestConsolidatedConfig(t *testing.T) {
 	t.Parallel()
@@ -58,23 +42,46 @@ func TestConsolidatedConfig(t *testing.T) {
 		err     string
 	}{
 		"default": {
+			config: NewConfig(),
+		},
+		"custom argline - default argument": {
+			arg: "something",
 			config: Config{
-				Address:      null.StringFrom("template"),
-				PushInterval: types.NullDurationFrom(1 * time.Second),
+				Address:      null.StringFrom("something"),
+				PushInterval: types.NewNullDuration(1*time.Second, false),
 			},
+		},
+		"custom argline - keyed": {
+			arg: "address=something,push_interval=4s",
+			config: Config{
+				Address:      null.StringFrom("something"),
+				PushInterval: types.NullDurationFrom(4 * time.Second),
+			},
+		},
+
+		"precedence": {
+			env: map[string]string{"K6_TEMPLATE_ADDRESS": "else", "K6_TEMPLATE_PUSH_INTERVAL": "4ms"},
+			arg: "address=something",
+			config: Config{
+				Address:      null.StringFrom("something"),
+				PushInterval: types.NullDurationFrom(4 * time.Millisecond),
+			},
+		},
+
+		"early error": {
+			env: map[string]string{"K6_TEMPLATE_ADDRESS": "else", "K6_TEMPLATE_PUSH_INTERVAL": "4something"},
+			arg: "address=something",
+			config: Config{
+				Address:      null.StringFrom("something"),
+				PushInterval: types.NewNullDuration(1*time.Second, false),
+			},
+			err: `error parsing environment variable 'K6_TEMPLATE_PUSH_INTERVAL': time: unknown unit "something" in duration "4something"`,
 		},
 	}
 
 	for name, testCase := range testCases {
 		testCase := testCase
 		t.Run(name, func(t *testing.T) {
-			// hacks around env not actually being taken into account
-			os.Clearenv()
-			defer os.Clearenv()
-			for k, v := range testCase.env {
-				require.NoError(t, os.Setenv(k, v))
-			}
-
 			config, err := GetConsolidatedConfig(testCase.jsonRaw, testCase.env, testCase.arg)
 			if testCase.err != "" {
 				require.Error(t, err)

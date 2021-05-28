@@ -1,7 +1,7 @@
 /*
  *
  * k6 - a next-generation load testing tool
- * Copyright (C) 2016 Load Impact
+ * Copyright (C) 2021 Load Impact
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -22,8 +22,6 @@ package template
 
 import (
 	"encoding/json"
-	"fmt"
-	"strings"
 	"time"
 
 	"gopkg.in/guregu/null.v3"
@@ -40,88 +38,35 @@ type Config struct {
 // NewConfig creates a new Config instance with default values for some fields.
 func NewConfig() Config {
 	return Config{
-		Address:      null.StringFrom("template"),
-		PushInterval: types.NullDurationFrom(1 * time.Second),
+		Address:      null.NewString("template", false),
+		PushInterval: types.NewNullDuration(1*time.Second, false),
 	}
-}
-
-func (c Config) Apply(cfg Config) Config {
-	if cfg.Address.Valid {
-		c.Address = cfg.Address
-	}
-	if cfg.PushInterval.Valid {
-		c.PushInterval = cfg.PushInterval
-	}
-	return c
-}
-
-// ParseArg takes an arg string and converts it to a config
-func ParseArg(arg string) (Config, error) {
-	c := Config{}
-
-	if !strings.Contains(arg, "=") {
-		c.Address = null.StringFrom(arg)
-		return c, nil
-	}
-
-	pairs := strings.Split(arg, ",")
-	for _, pair := range pairs {
-		r := strings.SplitN(pair, "=", 2)
-		if len(r) != 2 {
-			return c, fmt.Errorf("couldn't parse %q as argument for TEMPLATE output", arg)
-		}
-		switch r[0] {
-		case "address":
-			err := c.Address.UnmarshalText([]byte(r[1]))
-			if err != nil {
-				return c, err
-			}
-		case "push_interval":
-			err := c.PushInterval.UnmarshalText([]byte(r[1]))
-			if err != nil {
-				return c, err
-			}
-		default:
-			return c, fmt.Errorf("unknown key %q as argument for TEMPLATE output", r[0])
-		}
-	}
-
-	return c, nil
 }
 
 // GetConsolidatedConfig combines {default config values + JSON config +
 // environment vars + arg config values}, and returns the final result.
-func GetConsolidatedConfig(jsonRawConf json.RawMessage, env map[string]string, arg string) (Config, error) {
+func GetConsolidatedConfig(_ json.RawMessage, env map[string]string, argline string) (Config, error) {
 	result := NewConfig()
-	if jsonRawConf != nil {
-		jsonConf := Config{}
-		if err := json.Unmarshal(jsonRawConf, &jsonConf); err != nil {
-			return result, err
-		}
-		result = result.Apply(jsonConf)
+	arglines, err := parseArgLine(argline, "address")
+	if err != nil {
+		return result, err
 	}
+	ch := NewHelper(
+		NewMapLookupHelper(env, "error parsing environment variable '%s': %w"),
+		NewMapLookupHelper(arglines, "error parsing argument line key '%s': %w"),
+	)
+	ch.GetNullString(&result.Address, []string{"K6_TEMPLATE_ADDRESS"}, []string{"address"})
 
-	envConfig := Config{}
-	for k, v := range env {
-		switch k {
-		case "K6_TEMPLATE_PUSH_INTERVAL":
-			err := envConfig.PushInterval.UnmarshalText([]byte(v))
-			if err != nil {
-				return result, err
-			}
-		case "K6_TEMPLATE_ADDRESS":
-			envConfig.Address = null.NewString(v, true)
-		}
-	}
-	result = result.Apply(envConfig)
-
-	if arg != "" {
-		urlConf, err := ParseArg(arg)
+	// TODO this can also be a helper  but is here for illustrative purposes
+	ch.GetWithCallback(func(val string) error {
+		pushInterval, err := time.ParseDuration(val)
 		if err != nil {
-			return result, err
+			return err
 		}
-		result = result.Apply(urlConf)
-	}
+		result.PushInterval = types.NewNullDuration(pushInterval, true)
 
-	return result, nil
+		return nil
+	}, []string{"K6_TEMPLATE_PUSH_INTERVAL"}, []string{"push_interval"})
+
+	return result, ch.GetConcatenatedError("\n")
 }
