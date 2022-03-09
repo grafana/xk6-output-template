@@ -22,7 +22,7 @@ var _ output.Output = new(Output)
 
 // New creates an instance of the collector
 func New(p output.Params) (*Output, error) {
-	conf, err := GetConsolidatedConfig(p.JSONConfig, p.Environment, p.ConfigArgument)
+	conf, err := NewConfig(p)
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +35,7 @@ func New(p output.Params) (*Output, error) {
 }
 
 func (o *Output) Description() string {
-	return "template: " + o.config.Address.String
+	return "template: " + o.config.Address
 }
 
 func (o *Output) Stop() error {
@@ -50,7 +50,7 @@ func (o *Output) Start() error {
 
 	// Here we should connect to a service, open a file or w/e else we decided we need to do
 
-	pf, err := output.NewPeriodicFlusher(time.Duration(o.config.PushInterval.Duration), o.flushMetrics)
+	pf, err := output.NewPeriodicFlusher(o.config.PushInterval, o.flushMetrics)
 	if err != nil {
 		return err
 	}
@@ -68,9 +68,9 @@ func (o *Output) flushMetrics() {
 		samples := sc.GetSamples()
 		count += len(samples)
 		for _, sample := range samples {
-			// Here we actualyl write or accumulate to then write in batches
+			// Here we actually write or accumulate to then write in batches
 			// for the template code we just ... dump some parts of it on the screen
-			fmt.Printf("%s=%.5f,%+v\n", sample.Metric.Name, sample.Value, sample.GetTags())
+			fmt.Printf("%s=%.5f,%s\n", sample.Metric.Name, sample.Value, sample.GetTags().CloneTags())
 		}
 	}
 	if count > 0 {

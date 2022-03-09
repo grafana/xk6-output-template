@@ -6,9 +6,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"gopkg.in/guregu/null.v3"
-
-	"go.k6.io/k6/lib/types"
+	"go.k6.io/k6/output"
 )
 
 func TestConsolidatedConfig(t *testing.T) {
@@ -22,47 +20,34 @@ func TestConsolidatedConfig(t *testing.T) {
 		err     string
 	}{
 		"default": {
-			config: NewConfig(),
-		},
-		"custom argline - default argument": {
-			arg: "something",
 			config: Config{
-				Address:      null.StringFrom("something"),
-				PushInterval: types.NewNullDuration(1*time.Second, false),
-			},
-		},
-		"custom argline - keyed": {
-			arg: "address=something,push_interval=4s",
-			config: Config{
-				Address:      null.StringFrom("something"),
-				PushInterval: types.NullDurationFrom(4 * time.Second),
+				Address:      "template",
+				PushInterval: 1 * time.Second,
 			},
 		},
 
-		"precedence": {
+		"overwrite": {
 			env: map[string]string{"K6_TEMPLATE_ADDRESS": "else", "K6_TEMPLATE_PUSH_INTERVAL": "4ms"},
-			arg: "address=something",
 			config: Config{
-				Address:      null.StringFrom("something"),
-				PushInterval: types.NullDurationFrom(4 * time.Millisecond),
+				Address:      "else",
+				PushInterval: 4 * time.Millisecond,
 			},
 		},
 
 		"early error": {
 			env: map[string]string{"K6_TEMPLATE_ADDRESS": "else", "K6_TEMPLATE_PUSH_INTERVAL": "4something"},
-			arg: "address=something",
 			config: Config{
-				Address:      null.StringFrom("something"),
-				PushInterval: types.NewNullDuration(1*time.Second, false),
+				Address:      "else",
+				PushInterval: 1 * time.Second,
 			},
-			err: `error parsing environment variable 'K6_TEMPLATE_PUSH_INTERVAL': time: unknown unit "something" in duration "4something"`,
+			err: `time: unknown unit "something" in duration "4something"`,
 		},
 	}
 
 	for name, testCase := range testCases {
 		testCase := testCase
 		t.Run(name, func(t *testing.T) {
-			config, err := GetConsolidatedConfig(testCase.jsonRaw, testCase.env, testCase.arg)
+			config, err := NewConfig(output.Params{Environment: testCase.env})
 			if testCase.err != "" {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), testCase.err)
