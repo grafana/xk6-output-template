@@ -9,7 +9,7 @@ import (
 	"go.k6.io/k6/output"
 )
 
-func TestConsolidatedConfig(t *testing.T) {
+func TestConfig(t *testing.T) {
 	t.Parallel()
 	// TODO: add more cases
 	testCases := map[string]struct {

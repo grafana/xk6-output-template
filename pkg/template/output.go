@@ -9,7 +9,7 @@ import (
 	"go.k6.io/k6/output"
 )
 
-// Output implements the lib.Output interface and should be used only for testing
+// Output implements the lib.Output interface
 type Output struct {
 	output.SampleBuffer
 
