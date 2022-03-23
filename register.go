@@ -1,7 +1,7 @@
 package template
 
 import (
-	"github.com/k6io/xk6-output-template/pkg/template"
+	"github.com/grafana/xk6-output-template/pkg/template"
 	"go.k6.io/k6/output"
 )
 
