@@ -5,6 +5,8 @@ You should make a repo from this template and go through the code and replace ev
 TODO: more instructions and comment inline
 </div>
 
+> :warning: the API of k6 outputs [will likely change in the future](https://github.com/grafana/k6/issues/2430), so repos using it (like this repo) are not guaranteed to be working with any future version of k6.
+
 ## Build
 
 To build a `k6` binary with this extension, first ensure you have the prerequisites:
