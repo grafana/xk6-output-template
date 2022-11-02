@@ -70,7 +70,7 @@ func (o *Output) flushMetrics() {
 		for _, sample := range samples {
 			// Here we actually write or accumulate to then write in batches
 			// for the template code we just ... dump some parts of it on the screen
-			fmt.Printf("%s=%.5f,%s\n", sample.Metric.Name, sample.Value, sample.GetTags().CloneTags())
+			fmt.Printf("%s=%.5f,%s\n", sample.Metric.Name, sample.Value, sample.GetTags().Map())
 		}
 	}
 	if count > 0 {
