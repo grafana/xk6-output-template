@@ -1,7 +1,7 @@
+// Package template performs output operations for the extension
 package template
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -34,10 +34,12 @@ func New(p output.Params) (*Output, error) {
 	}, nil
 }
 
+// Description returns a human-readable description of the output that will be shown in `k6 run`
 func (o *Output) Description() string {
 	return "template: " + o.config.Address
 }
 
+// Stop flushes all remaining metrics and finalizes the test run
 func (o *Output) Stop() error {
 	o.logger.Debug("Stopping...")
 	defer o.logger.Debug("Stopped!")
@@ -45,6 +47,7 @@ func (o *Output) Stop() error {
 	return nil
 }
 
+// Start performs initialization tasks prior to Engine using the output
 func (o *Output) Start() error {
 	o.logger.Debug("Starting...")
 
@@ -70,7 +73,7 @@ func (o *Output) flushMetrics() {
 		for _, sample := range samples {
 			// Here we actually write or accumulate to then write in batches
 			// for the template code we just ... dump some parts of it on the screen
-			fmt.Printf("%s=%.5f,%s\n", sample.Metric.Name, sample.Value, sample.GetTags().Map())
+			o.logger.Infof("%s=%.5f,%s\n", sample.Metric.Name, sample.Value, sample.GetTags().Map())
 		}
 	}
 	if count > 0 {
