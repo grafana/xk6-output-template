@@ -8,7 +8,6 @@ There are more instructions and comments inline.
 
 ## Build
 
-
 To build a `k6` binary with this extension, first ensure you have the prerequisites:
 
 - [Go toolchain](https://go101.org/article/go-toolchain.html)
@@ -18,7 +17,7 @@ To build a `k6` binary with this extension, first ensure you have the prerequisi
 1. Build with `xk6`:
 
 ```bash
-xk6 build --with github.com/k6io/xk6-output-template
+xk6 build --with github.com/grafana/xk6-output-template
 ```
 
 This will result in a `k6` binary in the current directory.
@@ -28,4 +27,3 @@ This will result in a `k6` binary in the current directory.
 ```bash
 ./k6 run -o xk6-template <script.js>
 ```
-

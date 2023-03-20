@@ -1,3 +1,4 @@
+// Package template registers the extension for output
 package template
 
 import (

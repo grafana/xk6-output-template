@@ -47,6 +47,7 @@ func TestConfig(t *testing.T) {
 	for name, testCase := range testCases {
 		testCase := testCase
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			config, err := NewConfig(output.Params{Environment: testCase.env})
 			if testCase.err != "" {
 				require.Error(t, err)
