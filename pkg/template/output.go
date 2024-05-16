@@ -18,7 +18,7 @@ type Output struct {
 	logger          logrus.FieldLogger
 }
 
-var _ output.Output = new(Output)
+var _ output.WithStopWithTestError = new(Output)
 
 // New creates an instance of the collector
 func New(p output.Params) (*Output, error) {
@@ -39,11 +39,19 @@ func (o *Output) Description() string {
 	return "template: " + o.config.Address
 }
 
-// Stop flushes all remaining metrics and finalizes the test run
+// Stop to satisfy old output.Output interface
+// it's deprecated and will be removed in the future
+// StopWithTestError will be used instead
 func (o *Output) Stop() error {
+	return o.StopWithTestError(nil)
+}
+
+// StopWithTestError flushes all remaining metrics and finalizes the test run
+func (o *Output) StopWithTestError(testErr error) error {
 	o.logger.Debug("Stopping...")
 	defer o.logger.Debug("Stopped!")
 	o.periodicFlusher.Stop()
+
 	return nil
 }
 
