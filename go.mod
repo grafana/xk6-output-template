@@ -6,7 +6,7 @@ toolchain go1.24.13
 
 require (
 	github.com/sirupsen/logrus v1.9.3
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.11.1
 	go.k6.io/k6 v0.49.0
 )
 
