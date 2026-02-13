@@ -2,7 +2,7 @@ module github.com/grafana/xk6-output-template
 
 go 1.24.0
 
-toolchain go1.24.13
+toolchain go1.26.0
 
 require (
 	github.com/sirupsen/logrus v1.9.3
