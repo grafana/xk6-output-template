@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"go.k6.io/k6/output"
+	"go.k6.io/k6/v2/output"
 )
 
 // Config is the config for the template collector

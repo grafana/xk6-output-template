@@ -6,7 +6,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"go.k6.io/k6/output"
+	"go.k6.io/k6/v2/output"
 )
 
 // Output implements the lib.Output interface

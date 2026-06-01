@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"go.k6.io/k6/output"
+	"go.k6.io/k6/v2/output"
 )
 
 func TestConfig(t *testing.T) {
